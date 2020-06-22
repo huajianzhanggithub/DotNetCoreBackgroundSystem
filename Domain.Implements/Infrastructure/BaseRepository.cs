@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -153,7 +154,24 @@ namespace Domain.Implements.Infrastructure
 
         public PageModel<T> Search(PageCondition<T> condition)
         {
-            throw new NotImplementedException();
+            var result = new PageModel<T>
+            {
+                TotalCount = LongCount(condition.Predicate),
+                CurrentPage = condition.CurrentPage,
+                PerpageSize = condition.PerpageSize,
+            };
+            var soucre = Query(condition.Predicate);
+            if (condition.Sort.ToUpper().StartsWith("a")) // asc,升序
+            {
+                soucre = soucre.OrderByDynamic(t => $"t.{condition.OrderProperty}");
+            }
+            else // desc,降序
+            {
+                soucre = soucre.OrderByDescendingDynamic(t => $"t.{condition.OrderProperty}");
+            }
+            var items = soucre.Skip((condition.CurrentPage - 1) * condition.PerpageSize).Take(condition.PerpageSize);
+            result.Items = items.ToList();
+            return result;
         }
     }
 }
