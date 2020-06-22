@@ -26,9 +26,15 @@ namespace Utils.Extend.Lambda
                 var orderField = orderArray[0];
                 if (orderArray.Length==2)
                 {
-
+                    isAsc = orderArray[1].ToUpper() == "ASC";
                 }
+                var parameter = Expression.Parameter(typeof(T), "t");
+                var property = typeof(T).GetProperty(orderField);
+                var propertyAccess = Expression.MakeMemberAccess(parameter, property);
+                var orderByExp = Expression.Lambda(propertyAccess, parameter);
+                resultExp = Expression.Call(typeof(Queryable), isAsc ? "OrderBy" : "OrderByDescending", new[] { typeof(T), property.PropertyType }, source.Expression, Expression.Quote(orderByExp));
             }
+            return resultExp == null ? source : source.Provider.CreateQuery<T>(resultExp);
         }
     }
 }
