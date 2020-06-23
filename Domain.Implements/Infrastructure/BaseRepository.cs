@@ -7,6 +7,7 @@ using System.Text;
 using Data.Infrastructure;
 using Domain.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Utils.Extend.Lambda;
 using Z.EntityFramework.Plus;
 
 namespace Domain.Implements.Infrastructure
@@ -151,7 +152,11 @@ namespace Domain.Implements.Infrastructure
             }
             return result.ToList();
         }
-
+        /// <summary>
+        /// 用Z.EntityFramework.Plus.EFCore插件实现分页
+        /// </summary>
+        /// <param name="condition"></param>
+        /// <returns></returns>
         public PageModel<T> Search(PageCondition<T> condition)
         {
             var result = new PageModel<T>
@@ -170,6 +175,25 @@ namespace Domain.Implements.Infrastructure
                 soucre = soucre.OrderByDescendingDynamic(t => $"t.{condition.OrderProperty}");
             }
             var items = soucre.Skip((condition.CurrentPage - 1) * condition.PerpageSize).Take(condition.PerpageSize);
+            result.Items = items.ToList();
+            return result;
+        }
+        /// <summary>
+        /// 用Utils类里的自定义方法实现分页
+        /// </summary>
+        /// <param name="condition"></param>
+        /// <param name="selfStr"></param>
+        /// <returns></returns>
+        public PageModel<T> Search(PageCondition<T> condition, bool selfStr)
+        {
+            var result = new PageModel<T>
+            {
+                TotalCount = LongCount(condition.Predicate),
+                CurrentPage = condition.CurrentPage,
+                PerpageSize = condition.PerpageSize
+            };
+            var source = Set.Where(condition.Predicate).CreateOrderExpression(condition.OrderProperty, condition.Sort);
+            var items = source.Skip((condition.CurrentPage - 1) * condition.PerpageSize).Take(condition.PerpageSize);
             result.Items = items.ToList();
             return result;
         }
