@@ -11,7 +11,10 @@ namespace Utils.Security
         public static RSAParameters privateKey { get; private set; }
         public static void InitWindows()
         {
+            var parameters = new CspParameters()
+            { 
+                KeyContainerName = "RSAHELPER" //默认的RSA保存密钥的容器名称}
+            };
 
-        }
     }
 }
